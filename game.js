@@ -1,4 +1,44 @@
 // ============================================
+// AUDIO SYSTEM
+// ============================================
+const audio1 = new Audio('assets/bridge-audio1.mp3');
+const audio2 = new Audio('assets/bridge-audio2.mp3');
+
+let currentAudio = null;
+
+function startMusic() {
+  audio1.currentTime = 0;
+  audio2.currentTime = 0;
+  
+  // When audio1 ends, play audio2
+  audio1.onended = () => {
+    currentAudio = audio2;
+    audio2.play();
+  };
+
+  // When audio2 ends, play audio1 (loop forever)
+  audio2.onended = () => {
+    currentAudio = audio1;
+    audio1.currentTime = 0;
+    audio1.play();
+  };
+
+  // Start with audio1
+  currentAudio = audio1;
+  audio1.play();
+}
+
+function stopMusic() {
+  audio1.pause();
+  audio2.pause();
+  audio1.currentTime = 0;
+  audio2.currentTime = 0;
+  audio1.onended = null;
+  audio2.onended = null;
+  currentAudio = null;
+}
+
+// ============================================
 // CONSTANTS
 // ============================================
 const NUM_PILLARS = 5;
@@ -200,12 +240,14 @@ startBtn.addEventListener('click', () => {
   fullGameLog = [];
   computeAllMinMoves();
   loadLevel(currentLevel);
+  startMusic();
 });
 
 resetBtn.addEventListener('click', () => loadLevel(currentLevel));
 
 menuBtn.addEventListener('click', () => {
   stopTimer();
+  stopMusic();
   gameScreen.classList.add('hidden');
   titleScreen.classList.remove('hidden');
 });
