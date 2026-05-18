@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bridge Building Puzzle</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Title Screen -->
+  <div id="title-screen">
+    <div class="title-container">
+      <h1>🌉 Bridge Builder</h1>
+      <p class="subtitle">A cognitive planning puzzle</p>
+      <div class="title-instructions">
+        <h3>How to Play</h3>
+        <ul>
+          <li>Drag bridge pieces between the <strong>gaps</strong> (slots) to match the goal.</li>
+          <li>Heavier (wider) bridges <strong>cannot</strong> be placed on lighter ones.</li>
+          <li>You can only move the <strong>top bridge</strong> from any slot.</li>
+          <li>🔒 Fixed bridges <strong>cannot be moved or stacked on</strong>.</li>
+          <li>Match the <strong>goal layout</strong> in as few moves as possible!</li>
+        </ul>
+        <div class="visual-legend">
+          <h4>Legend</h4>
+          <div class="legend-row">
+            <div class="legend-pillar"></div>
+            <span>Platform pillar</span>
+          </div>
+          <div class="legend-row">
+            <div class="legend-bridge"></div>
+            <span>Movable bridge — drag between slots</span>
+          </div>
+          <div class="legend-row">
+            <div class="legend-fixed"></div>
+            <span>Fixed bridge — locked in place</span>
+          </div>
+        </div>
+      </div>
+      <button id="start-btn" class="btn-primary">Start Game</button>
+    </div>
+  </div>
+
+  <!-- Game Screen -->
+  <div id="game-screen" class="hidden">
+
+    <!-- Top Bar -->
+    <div id="top-bar">
+      <div class="top-bar-left">
+        <span class="level-name" id="level-name">Level 1</span>
+        <span class="sep">|</span>
+        <span class="label">Moves:</span>
+        <span id="move-count">0</span>
+        <span class="label"> / </span>
+        <span id="min-moves">—</span>
+        <span class="sep">|</span>
+        <span class="label">⏱</span>
+        <span id="timer">00:00</span>
+      </div>
+      <div class="top-bar-right">
+        <button id="reset-btn" class="btn-small">↺ Reset</button>
+        <button id="log-btn" class="btn-small">📋 Log</button>
+        <button id="menu-btn" class="btn-small">☰ Menu</button>
+      </div>
+    </div>
+
+    <!-- Goal Display -->
+    <div id="goal-section">
+      <div class="goal-label">GOAL</div>
+      <div id="goal-area"></div>
+    </div>
+
+    <!-- Main Game Area -->
+    <div id="game-wrapper">
+      <div id="game-area"></div>
+    </div>
+
+    <!-- Feedback -->
+    <div id="feedback" class="hidden"></div>
+
+    <!-- Level Complete Overlay -->
+    <div id="level-complete" class="overlay hidden">
+      <div class="overlay-content">
+        <h2>🎉 Level Complete!</h2>
+        <div class="result-grid">
+          <div class="result-item">
+            <div class="result-value" id="result-moves">0</div>
+            <div class="result-label">Moves</div>
+          </div>
+          <div class="result-item">
+            <div class="result-value" id="result-min">0</div>
+            <div class="result-label">Optimal</div>
+          </div>
+          <div class="result-item">
+            <div class="result-value" id="result-time">00:00</div>
+            <div class="result-label">Time</div>
+          </div>
+          <div class="result-item">
+            <div class="result-value" id="result-rating">⭐</div>
+            <div class="result-label">Rating</div>
+          </div>
+        </div>
+        <button id="next-level-btn" class="btn-primary">Next Level →</button>
+      </div>
+    </div>
+
+    <!-- Game Complete Overlay -->
+    <div id="game-complete" class="overlay hidden">
+      <div class="overlay-content wide">
+        <h2>🏆 All Levels Complete!</h2>
+        <div id="final-summary"></div>
+        <div class="overlay-buttons">
+          <button id="export-btn" class="btn-primary">📥 Export Log</button>
+          <button id="restart-btn" class="btn-primary">🔄 Play Again</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log Modal -->
+  <div id="log-modal" class="overlay hidden">
+    <div class="overlay-content wide">
+      <h2>📋 Move Log</h2>
+      <div id="log-content"></div>
+      <button id="close-log-btn" class="btn-primary">Close</button>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
