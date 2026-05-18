@@ -2,88 +2,147 @@
 // CONSTANTS
 // ============================================
 const NUM_PILLARS = 5;
-const NUM_SLOTS = 4; // gaps between pillars
+const NUM_SLOTS = 4;
+
+// ============================================
+// BFS SOLVER — finds true minimum moves
+// ============================================
+function encodeState(state) {
+  return state.map(s => s.join(',')).join('|');
+}
+
+function solveLevel(initial, goal, fixedSlot) {
+  const goalKey = encodeState(goal);
+  const startKey = encodeState(initial);
+  
+  if (startKey === goalKey) return 0;
+
+  const visited = new Set();
+  visited.add(startKey);
+
+  let queue = [{ state: initial.map(s => [...s]), moves: 0 }];
+
+  while (queue.length > 0) {
+    const nextQueue = [];
+
+    for (const { state, moves } of queue) {
+      // Try all possible moves
+      for (let from = 0; from < NUM_SLOTS; from++) {
+        if (state[from].length === 0) continue;
+
+        const piece = state[from][state[from].length - 1];
+
+        for (let to = 0; to < NUM_SLOTS; to++) {
+          if (to === from) continue;
+          if (to === fixedSlot) continue;
+
+          const targetStack = state[to];
+          if (targetStack.length > 0 && piece > targetStack[targetStack.length - 1]) continue;
+
+          // Make move
+          const newState = state.map(s => [...s]);
+          newState[from].pop();
+          newState[to].push(piece);
+
+          const key = encodeState(newState);
+          if (visited.has(key)) continue;
+          visited.add(key);
+
+          if (key === goalKey) return moves + 1;
+
+          nextQueue.push({ state: newState, moves: moves + 1 });
+        }
+      }
+    }
+
+    queue = nextQueue;
+
+    // Safety: don't let BFS run forever on huge states
+    if (visited.size > 500000) {
+      console.warn('Solver hit limit, returning estimate');
+      return -1;
+    }
+  }
+
+  return -1; // unsolvable
+}
 
 // ============================================
 // LEVEL DEFINITIONS
 // ============================================
-// 5 pillars → 4 slots (0–3)
-// initial/goal: arrays of 4 stacks (bottom→top)
-// fixedSlot: null or ONE slot index that is locked
-// With 1 locked you always have 3 free slots → always solvable
-
 const LEVELS = [
   {
     description: "Warm Up",
     initial:  [[2, 1], [], [], []],
     goal:     [[], [], [], [2, 1]],
-    fixedSlot: null,
-    minMoves: 3
+    fixedSlot: null
   },
   {
     description: "Three Bridges",
     initial:  [[3, 2, 1], [], [], []],
     goal:     [[], [], [], [3, 2, 1]],
-    fixedSlot: null,
-    minMoves: 7
+    fixedSlot: null
   },
   {
     description: "Spread Out",
     initial:  [[3, 2, 1], [], [], []],
     goal:     [[3], [2], [1], []],
-    fixedSlot: null,
-    minMoves: 5
+    fixedSlot: null
   },
   {
     description: "First Blockade",
+    initial:  [[2, 1], [], [], []],
+    goal:     [[], [], [], [2, 1]],
+    fixedSlot: 1
+  },
+  {
+    description: "Three Around a Block",
     initial:  [[3, 2, 1], [], [], []],
     goal:     [[], [], [], [3, 2, 1]],
-    fixedSlot: 1,
-    minMoves: 9
+    fixedSlot: 1
+  },
+  {
+    description: "Rearrangement",
+    initial:  [[3, 1], [2], [], []],
+    goal:     [[], [1], [3, 2], []],
+    fixedSlot: null
   },
   {
     description: "Four Bridges",
     initial:  [[4, 3, 2, 1], [], [], []],
     goal:     [[], [], [], [4, 3, 2, 1]],
-    fixedSlot: null,
-    minMoves: 15
+    fixedSlot: null
   },
   {
-    description: "Blocked Center",
+    description: "Four With Blockade",
     initial:  [[4, 3, 2, 1], [], [], []],
     goal:     [[], [], [], [4, 3, 2, 1]],
-    fixedSlot: 2,
-    minMoves: 17
+    fixedSlot: 2
   },
   {
-    description: "Rearrange",
-    initial:  [[3, 1], [2], [], []],
-    goal:     [[], [], [3, 2, 1], []],
-    fixedSlot: null,
-    minMoves: 5
-  },
-  {
-    description: "Rearrange Blocked",
-    initial:  [[3, 1], [2], [], []],
-    goal:     [[], [], [], [3, 2, 1]],
-    fixedSlot: 1,
-    minMoves: 9
-  },
-  {
-    description: "Five Bridges",
-    initial:  [[5, 4, 3, 2, 1], [], [], []],
-    goal:     [[], [], [], [5, 4, 3, 2, 1]],
-    fixedSlot: null,
-    minMoves: 31
+    description: "Scattered Start",
+    initial:  [[4, 1], [], [3, 2], []],
+    goal:     [[3], [4, 2, 1], [], []],
+    fixedSlot: null
   },
   {
     description: "Grand Finale",
     initial:  [[5, 4, 3, 2, 1], [], [], []],
     goal:     [[], [], [], [5, 4, 3, 2, 1]],
-    fixedSlot: 1,
-    minMoves: 49
+    fixedSlot: 1
   }
 ];
+
+// ============================================
+// Compute min moves for each level at startup
+// ============================================
+function computeAllMinMoves() {
+  LEVELS.forEach((level, i) => {
+    const min = solveLevel(level.initial, level.goal, level.fixedSlot);
+    level.minMoves = min > 0 ? min : '?';
+    console.log(`Level ${i + 1} (${level.description}): min = ${level.minMoves}`);
+  });
+}
 
 // ============================================
 // GAME STATE
@@ -139,6 +198,7 @@ startBtn.addEventListener('click', () => {
   currentLevel = 0;
   levelResults = [];
   fullGameLog = [];
+  computeAllMinMoves();
   loadLevel(currentLevel);
 });
 
@@ -245,7 +305,6 @@ function renderGame() {
   gameArea.innerHTML = '';
 
   for (let p = 0; p < NUM_PILLARS; p++) {
-    // Pillar
     const pillar = document.createElement('div');
     pillar.classList.add('platform-pillar');
 
@@ -260,7 +319,6 @@ function renderGame() {
 
     gameArea.appendChild(pillar);
 
-    // Slot
     if (p < NUM_SLOTS) {
       const slotEl = document.createElement('div');
       slotEl.classList.add('bridge-slot');
@@ -273,7 +331,6 @@ function renderGame() {
 
       const isFixed = (level.fixedSlot === p);
 
-      // Fixed bridge piece
       if (isFixed) {
         const fb = document.createElement('div');
         fb.classList.add('bridge-piece', 'fixed-bridge');
@@ -282,7 +339,6 @@ function renderGame() {
         slotEl.appendChild(fb);
       }
 
-      // Movable pieces
       const stack = slots[p];
       stack.forEach((weight, idx) => {
         const piece = document.createElement('div');
@@ -551,7 +607,8 @@ function onLevelComplete() {
 
   const level = LEVELS[currentLevel];
   const timeStr = formatTime(elapsedSeconds);
-  const ratio = level.minMoves > 0 ? moveCount / level.minMoves : 1;
+  const min = typeof level.minMoves === 'number' ? level.minMoves : moveCount;
+  const ratio = min > 0 ? moveCount / min : 1;
 
   let rating;
   if (ratio <= 1)        rating = '⭐⭐⭐';
@@ -642,7 +699,7 @@ function showLog() {
           detail = `⛔ W${e.piece}: Slot ${e.from} → Slot ${e.to} [${e.reason}]`;
           break;
         case 'LEVEL_START':
-          detail = `━━ ${e.description} ━━ (fixed: ${e.fixedSlot !== null ? 'Slot ' + (e.fixedSlot + 1) : 'none'})`;
+          detail = `━━ ${e.description} ━━ (fixed: ${e.fixedSlot !== null ? 'Slot ' + (e.fixedSlot + 1) : 'none'}, min: ${e.minMoves})`;
           break;
         case 'LEVEL_COMPLETE':
           detail = `✓ Level ${e.level}: ${e.moves} moves, ${formatTime(e.time)}, ${e.rating}`;
@@ -664,7 +721,7 @@ function exportLog() {
   const payload = {
     exportDate: new Date().toISOString(),
     participantId: 'anonymous',
-    gameVersion: '2.0',
+    gameVersion: '3.0',
     totalLevels: LEVELS.length,
     completedLevels: levelResults.length,
     summary: levelResults.map(r => ({
@@ -672,7 +729,7 @@ function exportLog() {
       description: r.description,
       moves: r.moves,
       minMoves: r.minMoves,
-      efficiency: r.minMoves > 0 ? +(r.minMoves / r.moves).toFixed(3) : null,
+      efficiency: typeof r.minMoves === 'number' && r.moves > 0 ? +(r.minMoves / r.moves).toFixed(3) : null,
       timeSec: r.timeSec,
       timeFormatted: r.timeFormatted,
       invalidAttempts: r.invalidAttempts,
@@ -714,10 +771,10 @@ function showGameComplete() {
   html += '</table>';
 
   const totMoves = levelResults.reduce((s, r) => s + r.moves, 0);
-  const totOpt   = levelResults.reduce((s, r) => s + r.minMoves, 0);
+  const totOpt   = levelResults.reduce((s, r) => s + (typeof r.minMoves === 'number' ? r.minMoves : 0), 0);
   const totTime  = levelResults.reduce((s, r) => s + r.timeSec, 0);
   const totErr   = levelResults.reduce((s, r) => s + r.invalidAttempts, 0);
-  const efficiency = totOpt > 0 ? ((totOpt / totMoves) * 100).toFixed(1) : 'N/A';
+  const efficiency = totOpt > 0 && totMoves > 0 ? ((totOpt / totMoves) * 100).toFixed(1) : 'N/A';
 
   html += `<p style="margin-top:14px;color:#889;font-size:13px;">
     Totals: ${totMoves} moves (optimal ${totOpt}, efficiency ${efficiency}%) · 
